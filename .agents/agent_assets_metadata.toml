@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "diV4FAv21aKC6qO5XpWnV"
+uri = "file://artifacts/realestate/public/hero-bg.jpg"
+type = "image"
+title = "luxury modern architecture real estate home exterior at dusk"

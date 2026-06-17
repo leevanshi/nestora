@@ -1,22 +1,24 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Real Estate Listing Portal API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: listings
+    description: Property listing operations
+  - name: saved
+    description: Saved listings operations
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +26,224 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /listings:
+    get:
+      operationId: getListings
+      tags: [listings]
+      summary: Get all listings with optional filters
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: minPrice
+          in: query
+          schema:
+            type: integer
+        - name: maxPrice
+          in: query
+          schema:
+            type: integer
+        - name: minBedrooms
+          in: query
+          schema:
+            type: integer
+        - name: propertyType
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: city
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of listings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Listing"
+    post:
+      operationId: createListing
+      tags: [listings]
+      summary: Create a new listing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ListingInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Listing"
+
+  /listings/stats:
+    get:
+      operationId: getListingStats
+      tags: [listings]
+      summary: Get market statistics
+      responses:
+        "200":
+          description: Market stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListingStats"
+
+  /listings/featured:
+    get:
+      operationId: getFeaturedListings
+      tags: [listings]
+      summary: Get featured listings
+      responses:
+        "200":
+          description: Featured listings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Listing"
+
+  /listings/recent:
+    get:
+      operationId: getRecentListings
+      tags: [listings]
+      summary: Get recently added listings
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Recent listings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Listing"
+
+  /listings/{id}:
+    get:
+      operationId: getListing
+      tags: [listings]
+      summary: Get a listing by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Listing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Listing"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateListing
+      tags: [listings]
+      summary: Update a listing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ListingUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Listing"
+    delete:
+      operationId: deleteListing
+      tags: [listings]
+      summary: Delete a listing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /saved-listings:
+    get:
+      operationId: getSavedListings
+      tags: [saved]
+      summary: Get all saved listings
+      responses:
+        "200":
+          description: Saved listings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SavedListing"
+    post:
+      operationId: saveListing
+      tags: [saved]
+      summary: Save a listing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SavedListingInput"
+      responses:
+        "201":
+          description: Saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SavedListing"
+
+  /saved-listings/{id}:
+    delete:
+      operationId: unsaveListing
+      tags: [saved]
+      summary: Remove a saved listing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Removed
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +254,230 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    Listing:
+      type: object
+      required:
+        - id
+        - title
+        - price
+        - address
+        - city
+        - state
+        - zip
+        - bedrooms
+        - bathrooms
+        - sqft
+        - propertyType
+        - status
+        - images
+        - createdAt
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        price:
+          type: integer
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip:
+          type: string
+        bedrooms:
+          type: integer
+        bathrooms:
+          type: number
+        sqft:
+          type: integer
+        propertyType:
+          type: string
+        status:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+        yearBuilt:
+          type: ["integer", "null"]
+        parkingSpots:
+          type: ["integer", "null"]
+        features:
+          type: array
+          items:
+            type: string
+        isFeatured:
+          type: boolean
+        createdAt:
+          type: string
+        updatedAt:
+          type: ["string", "null"]
+
+    ListingInput:
+      type: object
+      required:
+        - title
+        - price
+        - address
+        - city
+        - state
+        - zip
+        - bedrooms
+        - bathrooms
+        - sqft
+        - propertyType
+        - status
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        price:
+          type: integer
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip:
+          type: string
+        bedrooms:
+          type: integer
+        bathrooms:
+          type: number
+        sqft:
+          type: integer
+        propertyType:
+          type: string
+        status:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+        yearBuilt:
+          type: integer
+        parkingSpots:
+          type: integer
+        features:
+          type: array
+          items:
+            type: string
+        isFeatured:
+          type: boolean
+
+    ListingUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        price:
+          type: integer
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip:
+          type: string
+        bedrooms:
+          type: integer
+        bathrooms:
+          type: number
+        sqft:
+          type: integer
+        propertyType:
+          type: string
+        status:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+        yearBuilt:
+          type: integer
+        parkingSpots:
+          type: integer
+        features:
+          type: array
+          items:
+            type: string
+        isFeatured:
+          type: boolean
+
+    ListingStats:
+      type: object
+      required:
+        - totalListings
+        - avgPrice
+        - forSaleCount
+        - forRentCount
+        - soldCount
+        - byPropertyType
+      properties:
+        totalListings:
+          type: integer
+        avgPrice:
+          type: integer
+        forSaleCount:
+          type: integer
+        forRentCount:
+          type: integer
+        soldCount:
+          type: integer
+        byPropertyType:
+          type: array
+          items:
+            $ref: "#/components/schemas/PropertyTypeCount"
+
+    PropertyTypeCount:
+      type: object
+      required:
+        - propertyType
+        - count
+      properties:
+        propertyType:
+          type: string
+        count:
+          type: integer
+
+    SavedListing:
+      type: object
+      required:
+        - id
+        - listingId
+        - createdAt
+        - listing
+      properties:
+        id:
+          type: integer
+        listingId:
+          type: integer
+        createdAt:
+          type: string
+        listing:
+          $ref: "#/components/schemas/Listing"
+
+    SavedListingInput:
+      type: object
+      required:
+        - listingId
+      properties:
+        listingId:
+          type: integer
